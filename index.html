@@ -1,0 +1,531 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vocal Register Identifier</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background-color: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 900px;
+            padding: 30px;
+            text-align: center;
+        }
+        
+        h1 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 2.5rem;
+            background: linear-gradient(to right, #3498db, #2c3e50);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .description {
+            color: #555;
+            margin-bottom: 30px;
+            line-height: 1.6;
+            font-size: 1.1rem;
+        }
+        
+        .controls {
+            margin-bottom: 25px;
+        }
+        
+        button {
+            background: linear-gradient(to right, #3498db, #2c3e50);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: transform 0.2s, box-shadow 0.2s;
+            margin: 10px;
+            font-weight: 600;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+        }
+        
+        button:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 6px 12px rgba(0, 0, 0, 0.25);
+        }
+        
+        button:active {
+            transform: translateY(0);
+        }
+        
+        button:disabled {
+            background: #95a5a6;
+            cursor: not-allowed;
+            transform: none;
+            box-shadow: none;
+        }
+        
+        .visualization {
+            margin: 25px 0;
+            height: 200px;
+            border-radius: 10px;
+            background-color: #f8f9fa;
+            overflow: hidden;
+            position: relative;
+            border: 1px solid #e0e0e0;
+            box-shadow: inset 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        
+        canvas {
+            display: block;
+            width: 100%;
+            height: 100%;
+        }
+        
+        .result {
+            margin-top: 20px;
+            padding: 25px;
+            border-radius: 15px;
+            background: linear-gradient(to right, #ecf0f1, #d6dbdf);
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .register {
+            font-size: 2.2rem;
+            font-weight: bold;
+            color: #2980b9;
+            margin: 15px 0;
+            text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.1);
+            transition: color 0.3s;
+        }
+        
+        .confidence {
+            font-size: 1.1rem;
+            color: #7f8c8d;
+            margin: 10px 0;
+        }
+        
+        .frequency {
+            font-size: 1.3rem;
+            color: #2c3e50;
+            margin: 10px 0;
+            font-weight: 500;
+        }
+        
+        .info {
+            margin-top: 30px;
+            text-align: left;
+            background-color: #f8f9fa;
+            padding: 25px;
+            border-radius: 15px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .info h2 {
+            color: #2c3e50;
+            margin-bottom: 20px;
+            font-size: 1.6rem;
+            text-align: center;
+        }
+        
+        .info p {
+            margin-bottom: 15px;
+            line-height: 1.6;
+            color: #555;
+        }
+        
+        .register-info {
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            margin-top: 20px;
+        }
+        
+        .register-type {
+            width: 48%;
+            background: white;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+            transition: transform 0.3s;
+            border-left: 5px solid #3498db;
+        }
+        
+        .register-type:hover {
+            transform: translateY(-5px);
+        }
+        
+        .register-type h3 {
+            color: #2c3e50;
+            font-size: 1.3rem;
+            margin-bottom: 12px;
+        }
+        
+        .register-type p {
+            font-size: 1rem;
+            color: #666;
+            line-height: 1.5;
+        }
+        
+        .pulse {
+            display: inline-block;
+            width: 15px;
+            height: 15px;
+            border-radius: 50%;
+            background-color: #e74c3c;
+            margin-right: 10px;
+            animation: pulse 1.5s infinite;
+        }
+        
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.4; }
+            100% { opacity: 1; }
+        }
+        
+        .status {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            color: #2c3e50;
+            font-weight: 500;
+            font-size: 1.1rem;
+        }
+        
+        .instructions {
+            background-color: #fff4e6;
+            padding: 20px;
+            border-radius: 12px;
+            margin: 25px 0;
+            text-align: left;
+            border-left: 5px solid #e67e22;
+        }
+        
+        .instructions h3 {
+            color: #e67e22;
+            margin-bottom: 15px;
+        }
+        
+        .instructions ol {
+            padding-left: 20px;
+        }
+        
+        .instructions li {
+            margin-bottom: 10px;
+            color: #555;
+        }
+        
+        @media (max-width: 768px) {
+            .register-type {
+                width: 100%;
+            }
+            
+            h1 {
+                font-size: 2rem;
+            }
+            
+            .register {
+                font-size: 1.8rem;
+            }
+        }
+        
+        .mixed-highlight {
+            background: linear-gradient(to right, #fdbb2d, #e74c3c);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 5px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Vocal Register Identifier</h1>
+        <p class="description">This app analyzes your voice in real-time to identify which vocal register you're using. Click "Start" and sing or speak into your microphone.</p>
+        
+        <div class="instructions">
+            <h3>How to Use:</h3>
+            <ol>
+                <li>Click the "Start" button and allow microphone access when prompted</li>
+                <li>Speak or sing into your microphone at different pitches</li>
+                <li>The app will detect your vocal register in real-time</li>
+                <li>Try different vocal ranges to see the register change</li>
+                <li>Click "Stop" when you're finished</li>
+            </ol>
+        </div>
+        
+        <div class="controls">
+            <button id="startBtn">Start Analysis</button>
+            <button id="stopBtn" disabled>Stop Analysis</button>
+        </div>
+        
+        <div class="status">
+            <span id="statusIndicator" class="pulse"></span>
+            <span id="statusText">Ready to start</span>
+        </div>
+        
+        <div class="visualization">
+            <canvas id="visualizer"></canvas>
+        </div>
+        
+        <div class="result">
+            <h2>Current Register</h2>
+            <div id="register" class="register">-</div>
+            <div id="frequency" class="frequency">Frequency: - Hz</div>
+            <div id="confidence" class="confidence">Confidence: -</div>
+        </div>
+        
+        <div class="info">
+            <h2>About Vocal Registers</h2>
+            <p>Vocal registers refer to the range of tones produced by the human voice, characterized by their vibratory pattern of the vocal folds. While frequency is a primary indicator, timbre and other factors also contribute to register classification.</p>
+            
+            <div class="register-info">
+                <div class="register-type">
+                    <h3>Vocal Fry</h3>
+                    <p>The lowest register, characterized by a creaky, popping sound. Frequency range: 20-60 Hz. Often used at the very bottom of a singer's range.</p>
+                </div>
+                <div class="register-type">
+                    <h3>Chest Voice</h3>
+                    <p>The rich, full sound most people use for speaking. Frequency range: 60-200 Hz. Resonates in the chest cavity and feels vibrations in the chest.</p>
+                </div>
+                <div class="register-type">
+                    <h3>Mixed Voice</h3>
+                    <p>A blend of chest and head voice that allows smooth transition between registers. Frequency range: 200-400 Hz. Provides a balanced, powerful sound.</p>
+                </div>
+                <div class="register-type">
+                    <h3>Head Voice</h3>
+                    <p>A lighter, more resonant sound that vibrates in the head. Frequency range: 300-600 Hz. Often used for higher pitches in singing.</p>
+                </div>
+                <div class="register-type">
+                    <h3>Falsetto</h3>
+                    <p>A breathy, flute-like register used for very high notes. Frequency range: 400-2000 Hz. More common in male singers extending beyond their normal range.</p>
+                </div>
+                <div class="register-type">
+                    <h3>Whistle Register</h3>
+                    <p>The highest register with a flute-like, piercing quality. Frequency range: 1000-2500 Hz. Rare and difficult to control for many singers.</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const startBtn = document.getElementById('startBtn');
+            const stopBtn = document.getElementById('stopBtn');
+            const statusIndicator = document.getElementById('statusIndicator');
+            const statusText = document.getElementById('statusText');
+            const registerElement = document.getElementById('register');
+            const frequencyElement = document.getElementById('frequency');
+            const confidenceElement = document.getElementById('confidence');
+            const canvas = document.getElementById('visualizer');
+            const canvasCtx = canvas.getContext('2d');
+            
+            let audioContext;
+            let analyser;
+            let microphone;
+            let isRecording = false;
+            let animationId;
+            
+            // Set canvas size
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+            
+            // Vocal register frequency ranges (updated with mixed voice)
+            const registerRanges = [
+                { name: "Vocal Fry", min: 20, max: 60, color: "#8c7ae6" },
+                { name: "Chest Voice", min: 60, max: 200, color: "#44bd32" },
+                { name: "Mixed Voice", min: 200, max: 400, color: "#fdbb2d" },
+                { name: "Head Voice", min: 300, max: 600, color: "#e1b12c" },
+                { name: "Falsetto", min: 400, max: 1000, color: "#e84118" },
+                { name: "Whistle Register", min: 1000, max: 2500, color: "#9c88ff" }
+            ];
+            
+            startBtn.addEventListener('click', startRecording);
+            stopBtn.addEventListener('click', stopRecording);
+            
+            function startRecording() {
+                if (isRecording) return;
+                
+                statusText.textContent = "Listening... Speak or sing into your microphone";
+                startBtn.disabled = true;
+                stopBtn.disabled = false;
+                
+                // Initialize audio context
+                audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioContext.createAnalyser();
+                analyser.fftSize = 2048;
+                
+                // Create microphone stream
+                navigator.mediaDevices.getUserMedia({ audio: true })
+                    .then(function(stream) {
+                        microphone = audioContext.createMediaStreamSource(stream);
+                        microphone.connect(analyser);
+                        
+                        isRecording = true;
+                        visualize();
+                        analyzeAudio();
+                    })
+                    .catch(function(err) {
+                        alert("Error accessing microphone: " + err.message);
+                        resetUI();
+                    });
+            }
+            
+            function stopRecording() {
+                if (!isRecording) return;
+                
+                if (microphone) {
+                    microphone.disconnect();
+                }
+                
+                if (animationId) {
+                    cancelAnimationFrame(animationId);
+                }
+                
+                if (audioContext) {
+                    audioContext.close();
+                }
+                
+                isRecording = false;
+                resetUI();
+                
+                registerElement.textContent = "-";
+                frequencyElement.textContent = "Frequency: - Hz";
+                confidenceElement.textContent = "Confidence: -";
+                
+                // Clear canvas
+                canvasCtx.clearRect(0, 0, canvas.width, canvas.height);
+            }
+            
+            function resetUI() {
+                startBtn.disabled = false;
+                stopBtn.disabled = true;
+                statusText.textContent = "Ready to start";
+            }
+            
+            function visualize() {
+                if (!isRecording) return;
+                
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                
+                function draw() {
+                    animationId = requestAnimationFrame(draw);
+                    
+                    analyser.getByteFrequencyData(dataArray);
+                    
+                    canvasCtx.fillStyle = '#f8f9fa';
+                    canvasCtx.fillRect(0, 0, canvas.width, canvas.height);
+                    
+                    const barWidth = (canvas.width / bufferLength) * 2.5;
+                    let barHeight;
+                    let x = 0;
+                    
+                    for (let i = 0; i < bufferLength; i++) {
+                        barHeight = dataArray[i] / 2;
+                        
+                        // Determine color based on frequency
+                        const frequency = i * (audioContext.sampleRate / analyser.fftSize);
+                        let color = "#6c5ce7";
+                        
+                        for (const range of registerRanges) {
+                            if (frequency >= range.min && frequency <= range.max) {
+                                color = range.color;
+                                break;
+                            }
+                        }
+                        
+                        canvasCtx.fillStyle = color;
+                        canvasCtx.fillRect(x, canvas.height - barHeight, barWidth, barHeight);
+                        
+                        x += barWidth + 1;
+                    }
+                }
+                
+                draw();
+            }
+            
+            function analyzeAudio() {
+                if (!isRecording) return;
+                
+                const bufferLength = analyser.frequencyBinCount;
+                const dataArray = new Uint8Array(bufferLength);
+                
+                function process() {
+                    if (!isRecording) return;
+                    
+                    analyser.getByteFrequencyData(dataArray);
+                    
+                    // Find the dominant frequency
+                    let maxValue = 0;
+                    let maxIndex = 0;
+                    
+                    for (let i = 0; i < bufferLength; i++) {
+                        if (dataArray[i] > maxValue) {
+                            maxValue = dataArray[i];
+                            maxIndex = i;
+                        }
+                    }
+                    
+                    // Calculate frequency in Hz
+                    const frequency = maxIndex * (audioContext.sampleRate / analyser.fftSize);
+                    
+                    // Determine vocal register
+                    let detectedRegister = "Unknown";
+                    let confidence = "Low";
+                    
+                    for (const range of registerRanges) {
+                        if (frequency >= range.min && frequency <= range.max) {
+                            detectedRegister = range.name;
+                            
+                            // Simple confidence calculation based on amplitude
+                            if (maxValue > 200) {
+                                confidence = "High";
+                            } else if (maxValue > 100) {
+                                confidence = "Medium";
+                            } else {
+                                confidence = "Low";
+                            }
+                            
+                            break;
+                        }
+                    }
+                    
+                    // Update UI
+                    registerElement.textContent = detectedRegister;
+                    frequencyElement.textContent = `Frequency: ${frequency.toFixed(1)} Hz`;
+                    confidenceElement.textContent = `Confidence: ${confidence}`;
+                    
+                    // Highlight mixed voice
+                    if (detectedRegister === "Mixed Voice") {
+                        registerElement.innerHTML = '<span class="mixed-highlight">Mixed Voice</span>';
+                    }
+                    
+                    requestAnimationFrame(process);
+                }
+                
+                process();
+            }
+        });
+    </script>
+</body>
+</html>
